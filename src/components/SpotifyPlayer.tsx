@@ -3,17 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Script from 'next/script';
+import { useSpotifyPlayer } from '@/contexts/SpotifyPlayerContext';
+import Image from 'next/image';
 
-interface SpotifyPlayerProps {
-  trackUri?: string;
-}
-
-export default function SpotifyPlayer({ trackUri }: SpotifyPlayerProps) {
+export default function SpotifyPlayer() {
   const { data: session } = useSession();
   const [player, setPlayer] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<any>(null);
-  const [deviceId, setDeviceId] = useState<string>('');
+  const { setDeviceId, setPlayer: setGlobalPlayer } = useSpotifyPlayer();
 
   useEffect(() => {
     if (!session?.accessToken) return;
@@ -29,6 +27,7 @@ export default function SpotifyPlayer({ trackUri }: SpotifyPlayerProps) {
         console.log('Ready with Device ID', device_id);
         setDeviceId(device_id);
         setPlayer(player);
+        setGlobalPlayer(player);
       });
 
       player.addListener('player_state_changed', (state: any) => {
@@ -39,7 +38,7 @@ export default function SpotifyPlayer({ trackUri }: SpotifyPlayerProps) {
 
       player.connect();
     };
-  }, [session]);
+  }, [session, setDeviceId, setGlobalPlayer]);
 
   const togglePlay = async () => {
     if (!player) return;
@@ -55,6 +54,12 @@ export default function SpotifyPlayer({ trackUri }: SpotifyPlayerProps) {
     setIsPlaying(!state.paused);
   };
 
+  if (!currentTrack) {
+    return (
+      <div className="fixed bottom-0 left-0 right-0 bg-[#181818] border-t border-[#282828] h-[90px]" />
+    );
+  }
+
   return (
     <>
       <Script src="https://sdk.scdn.co/spotify-player.js" strategy="afterInteractive" />
@@ -62,58 +67,61 @@ export default function SpotifyPlayer({ trackUri }: SpotifyPlayerProps) {
       <div className="fixed bottom-0 left-0 right-0 bg-[#181818] border-t border-[#282828] px-4 py-3">
         <div className="flex items-center justify-between max-w-screen-xl mx-auto">
           {/* Track Info */}
-          <div className="flex items-center gap-4">
-            {currentTrack && (
-              <>
-                <img
-                  src={currentTrack.album.images[0].url}
-                  alt={currentTrack.name}
-                  className="h-14 w-14 rounded"
-                />
-                <div>
-                  <h4 className="text-white font-medium">{currentTrack.name}</h4>
-                  <p className="text-sm text-gray-400">
-                    {currentTrack.artists.map((a: any) => a.name).join(', ')}
-                  </p>
-                </div>
-              </>
-            )}
+          <div className="flex items-center gap-4 min-w-[180px]">
+            <div className="relative h-14 w-14">
+              <Image
+                src={currentTrack.album.images[0].url}
+                alt={currentTrack.name}
+                fill
+                className="object-cover rounded"
+              />
+            </div>
+            <div>
+              <h4 className="text-white font-medium text-sm hover:underline cursor-pointer">
+                {currentTrack.name}
+              </h4>
+              <p className="text-xs text-gray-400 hover:underline cursor-pointer">
+                {currentTrack.artists.map((a: any) => a.name).join(', ')}
+              </p>
+            </div>
           </div>
 
           {/* Controls */}
-          <div className="flex items-center gap-6">
-            <button
-              onClick={() => player?.previousTrack()}
-              className="text-gray-400 hover:text-white"
-            >
-              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M7 6v12l10-6z" />
-              </svg>
-            </button>
-            
-            <button
-              onClick={togglePlay}
-              className="bg-white rounded-full p-2 hover:scale-105 transition-transform"
-            >
-              {isPlaying ? (
-                <svg className="h-6 w-6" fill="black" viewBox="0 0 24 24">
-                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+          <div className="flex flex-col items-center gap-2 flex-1 max-w-[722px]">
+            <div className="flex items-center gap-6">
+              <button
+                onClick={() => player?.previousTrack()}
+                className="text-gray-400 hover:text-white"
+              >
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M7 6v12l10-6z" />
                 </svg>
-              ) : (
-                <svg className="h-6 w-6" fill="black" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              )}
-            </button>
+              </button>
+              
+              <button
+                onClick={togglePlay}
+                className="bg-white rounded-full p-2 hover:scale-105 transition-transform"
+              >
+                {isPlaying ? (
+                  <svg className="h-6 w-6" fill="black" viewBox="0 0 24 24">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                  </svg>
+                ) : (
+                  <svg className="h-6 w-6" fill="black" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                )}
+              </button>
 
-            <button
-              onClick={() => player?.nextTrack()}
-              className="text-gray-400 hover:text-white"
-            >
-              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M7 18V6l10 6z" />
-              </svg>
-            </button>
+              <button
+                onClick={() => player?.nextTrack()}
+                className="text-gray-400 hover:text-white"
+              >
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M7 18V6l10 6z" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Volume Control */}
@@ -122,7 +130,8 @@ export default function SpotifyPlayer({ trackUri }: SpotifyPlayerProps) {
               type="range"
               min="0"
               max="100"
-              className="w-full"
+              defaultValue={50}
+              className="w-full accent-white"
               onChange={(e) => player?.setVolume(Number(e.target.value) / 100)}
             />
           </div>

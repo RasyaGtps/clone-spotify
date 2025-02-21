@@ -139,23 +139,7 @@ export default async function Home() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {recentlyPlayed?.items?.length > 0 ? (
                   recentlyPlayed.items.slice(0, 4).map((item: SpotifyRecentlyPlayed) => (
-                    <div 
-                      key={item?.track?.id} 
-                      className="bg-[#181818] p-4 rounded-lg hover:bg-[#282828] transition-colors cursor-pointer"
-                    >
-                      <div className="relative aspect-square mb-4">
-                        <Image
-                          src={item?.track?.album?.images?.[0]?.url || '/default-album.png'}
-                          alt={item?.track?.name || 'Track'}
-                          fill
-                          className="object-cover rounded"
-                        />
-                      </div>
-                      <h3 className="text-white font-bold truncate">{item?.track?.name || 'Unknown Track'}</h3>
-                      <p className="text-gray-400 text-sm mt-1 truncate">
-                        {item?.track?.artists?.map((a: any) => a.name).join(', ') || 'Unknown Artist'}
-                      </p>
-                    </div>
+                    <TrackCard key={item.track.id} track={item.track} />
                   ))
                 ) : (
                   <div className="col-span-full text-center text-gray-400">
