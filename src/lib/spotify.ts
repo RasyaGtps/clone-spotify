@@ -91,10 +91,21 @@ export async function getLyrics(trackName: string, artistName: string) {
 }
 
 export async function playTrack(trackUri: string, deviceId: string) {
-  return spotifyApi(`/me/player/play?device_id=${deviceId}`, {
-    method: 'PUT',
-    body: JSON.stringify({
-      uris: [trackUri]
-    })
-  });
+  try {
+    const response = await spotifyApi(`/me/player/play?device_id=${deviceId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        uris: [trackUri],
+        position_ms: 0, // Mulai dari awal lagu
+      }),
+    });
+    console.log('Play track response:', response);
+    return response;
+  } catch (error) {
+    console.error('Error playing track:', error);
+    throw error;
+  }
 } 

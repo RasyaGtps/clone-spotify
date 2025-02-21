@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import Script from 'next/script';
 import { useSpotifyPlayer } from '@/contexts/SpotifyPlayerContext';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function SpotifyPlayer() {
   const { data: session } = useSession();
@@ -28,15 +29,45 @@ export default function SpotifyPlayer() {
         setDeviceId(device_id);
         setPlayer(player);
         setGlobalPlayer(player);
+        
+        // Set this device as active
+        fetch('https://api.spotify.com/v1/me/player', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${session.accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            device_ids: [device_id],
+            play: false,
+          }),
+        });
       });
 
       player.addListener('player_state_changed', (state: any) => {
         if (!state) return;
+        console.log('Player State:', state);
         setCurrentTrack(state.track_window.current_track);
         setIsPlaying(!state.paused);
       });
 
-      player.connect();
+      player.addListener('initialization_error', ({ message }) => {
+        console.error('Failed to initialize:', message);
+      });
+
+      player.addListener('authentication_error', ({ message }) => {
+        console.error('Failed to authenticate:', message);
+      });
+
+      player.addListener('account_error', ({ message }) => {
+        console.error('Failed to validate Spotify account:', message);
+      });
+
+      player.connect().then(success => {
+        if (success) {
+          console.log('The Web Playback SDK successfully connected to Spotify!');
+        }
+      });
     };
   }, [session, setDeviceId, setGlobalPlayer]);
 
@@ -65,76 +96,18 @@ export default function SpotifyPlayer() {
       <Script src="https://sdk.scdn.co/spotify-player.js" strategy="afterInteractive" />
       
       <div className="fixed bottom-0 left-0 right-0 bg-[#181818] border-t border-[#282828] px-4 py-3">
-        <div className="flex items-center justify-between max-w-screen-xl mx-auto">
-          {/* Track Info */}
-          <div className="flex items-center gap-4 min-w-[180px]">
-            <div className="relative h-14 w-14">
-              <Image
-                src={currentTrack.album.images[0].url}
-                alt={currentTrack.name}
-                fill
-                className="object-cover rounded"
-              />
-            </div>
-            <div>
-              <h4 className="text-white font-medium text-sm hover:underline cursor-pointer">
-                {currentTrack.name}
-              </h4>
-              <p className="text-xs text-gray-400 hover:underline cursor-pointer">
-                {currentTrack.artists.map((a: any) => a.name).join(', ')}
-              </p>
-            </div>
-          </div>
-
-          {/* Controls */}
-          <div className="flex flex-col items-center gap-2 flex-1 max-w-[722px]">
-            <div className="flex items-center gap-6">
-              <button
-                onClick={() => player?.previousTrack()}
-                className="text-gray-400 hover:text-white"
-              >
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M7 6v12l10-6z" />
-                </svg>
-              </button>
-              
-              <button
-                onClick={togglePlay}
-                className="bg-white rounded-full p-2 hover:scale-105 transition-transform"
-              >
-                {isPlaying ? (
-                  <svg className="h-6 w-6" fill="black" viewBox="0 0 24 24">
-                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                  </svg>
-                ) : (
-                  <svg className="h-6 w-6" fill="black" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                )}
-              </button>
-
-              <button
-                onClick={() => player?.nextTrack()}
-                className="text-gray-400 hover:text-white"
-              >
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M7 18V6l10 6z" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* Volume Control */}
-          <div className="w-32">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              defaultValue={50}
-              className="w-full accent-white"
-              onChange={(e) => player?.setVolume(Number(e.target.value) / 100)}
-            />
-          </div>
+        <div className="flex items-center justify-center max-w-screen-xl mx-auto">
+          <p className="text-gray-400 text-sm">
+            Pemutaran langsung memerlukan{' '}
+            <Link 
+              href="https://www.spotify.com/premium/" 
+              target="_blank"
+              className="text-white hover:underline"
+            >
+              Spotify Premium
+            </Link>
+            . Klik lagu untuk membuka di aplikasi Spotify.
+          </p>
         </div>
       </div>
     </>

@@ -2,33 +2,15 @@
 
 import Image from 'next/image';
 import { SpotifyTrack } from '@/types/spotify';
-import { playTrack } from '@/lib/spotify';
-import { useSpotifyPlayer } from '@/contexts/SpotifyPlayerContext';
 
 interface TrackCardProps {
   track: SpotifyTrack;
 }
 
 export default function TrackCard({ track }: TrackCardProps) {
-  const { deviceId, player } = useSpotifyPlayer();
-
-  const handlePlay = async () => {
-    if (!deviceId) {
-      console.log('No device ID available');
-      return;
-    }
-    try {
-      console.log('Playing track:', track.name, 'on device:', deviceId);
-      await playTrack(`spotify:track:${track.id}`, deviceId);
-      // Resume playback after setting the track
-      if (player) {
-        setTimeout(() => {
-          player.resume();
-        }, 300);
-      }
-    } catch (error) {
-      console.error('Error playing track:', error);
-    }
+  const handlePlay = () => {
+    // Buka di aplikasi Spotify
+    window.open(track.external_urls.spotify, '_blank');
   };
 
   return (

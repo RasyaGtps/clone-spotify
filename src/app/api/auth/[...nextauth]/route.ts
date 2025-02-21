@@ -2,21 +2,19 @@ import NextAuth from 'next-auth';
 import SpotifyProvider from 'next-auth/providers/spotify';
 
 const scope = [
+  'streaming',
   'user-read-email',
   'user-read-private',
-  'playlist-read-private',
-  'playlist-read-collaborative',
-  'playlist-modify-public',
-  'playlist-modify-private',
-  'user-library-read',
-  'user-library-modify',
-  'user-top-read',
-  'user-read-recently-played',
   'user-read-playback-state',
   'user-modify-playback-state',
   'user-read-currently-playing',
-  'streaming',
-  'app-remote-control'
+  'app-remote-control',
+  'user-read-playback-position',
+  'playlist-read-private',
+  'playlist-read-collaborative',
+  'user-library-read',
+  'user-top-read',
+  'user-read-recently-played'
 ].join(' ');
 
 export const authOptions = {

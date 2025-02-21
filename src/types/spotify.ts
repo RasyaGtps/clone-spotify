@@ -16,6 +16,9 @@ export interface SpotifyTrack {
   album: {
     images: SpotifyImage[];
   };
+  external_urls: {
+    spotify: string;
+  };
 }
 
 export interface SpotifyPlaylist {
